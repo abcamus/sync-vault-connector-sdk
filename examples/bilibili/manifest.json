@@ -1,0 +1,10 @@
+{
+  "id": "bilibili",
+  "name": "Bilibili",
+  "version": "1.0.0",
+  "apiVersion": "0.1",
+  "type": "cloud-video",
+  "description": "解析 B站 UGC 视频（/video/BV… 或 /video/av…，含 b23.tv 短链）为可播放的合并流",
+  "author": "Camus Qiu",
+  "homepage": "https://github.com/sync-vault/sync-vault-connector-sdk"
+}

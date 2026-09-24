@@ -1,0 +1,10 @@
+{
+  "id": "my-connector",
+  "name": "My Connector",
+  "version": "1.0.0",
+  "apiVersion": "0.1",
+  "type": "cloud-video",
+  "description": "把 demo.example.com 的视频地址直连交给播放器",
+  "author": "your-name",
+  "homepage": "https://github.com/you/my-connector"
+}

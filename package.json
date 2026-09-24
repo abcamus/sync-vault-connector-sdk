@@ -1,0 +1,38 @@
+{
+  "name": "sync-vault-connector-sdk",
+  "version": "0.1.0",
+  "description": "Type definitions and local dev harness for writing Sync Vault connectors",
+  "license": "MIT",
+  "author": "Camus Qiu",
+  "keywords": [
+    "obsidian",
+    "sync-vault",
+    "connector"
+  ],
+  "type": "commonjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./mock": {
+      "types": "./mock/index.d.ts",
+      "default": "./mock/index.js"
+    }
+  },
+  "bin": {
+    "sync-vault-connector-mock": "./mock/cli.js"
+  },
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "mock",
+    "CONNECTOR_API.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
