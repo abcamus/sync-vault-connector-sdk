@@ -117,6 +117,7 @@ mock 的校验规则、`main.js` 求值方式与宿主一致；差异只有两�
 
 - [CONNECTOR_API.md](CONNECTOR_API.md) —— 契约细节：manifest 字段、ctx 能力、`MediaStreamInfo`、生命周期、约束
 - [examples/bilibili](examples/bilibili) —— 用本 SDK 写的 B 站解析 connector（与插件内置实现同一套解析逻辑）
+- [examples/xiaohongshu](examples/xiaohongshu) —— 用本 SDK 写的小红书视频笔记解析 connector（CDN 直连，桌面端与移动端均可播放）
 
 ## 许可
 

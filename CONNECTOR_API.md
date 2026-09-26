@@ -109,7 +109,7 @@ interface CloudVideoConnector {
 
 - `match(url)`：这个地址是否交由本 connector 处理。**不要在里面做耗时请求**：宿主在笔记/播放器解析地址时会同步调用它。
 - 多个 connector 都 `match` 时，**目录名升序的第一个生效**，命中的那个完全负责该地址。
-- `resolve(url, onProgress)`：解析为可播放流。`onProgress` 用于在播放器加载层显示当前进度文案（如“解析中…”）。
+- `resolve(url, onProgress)`：解析为可播放流。`onProgress` 用于在播放器加载层显示当前进度文案（如“解析中…”）。地址过期时宿主会再次调用（见“播放地址过期与资源清理”）。
 - **失败必须抛出明确错误**：宿主不会回落到内置解析、不会静默换直连，也不会再问其它 connector，而是直接把失败暴露给用户并记日志。请不要用“返回空流”之类的方式掩盖错误。
 
 ### MediaStreamInfo
@@ -124,7 +124,7 @@ interface CloudVideoConnector {
 | `proxy` | 否 | `true` 表示视频请求经宿主本地代理转发（见下节） |
 | `coverUrl` | 否 | 封面图 |
 | `cursor` | 否 | 上次播放位置（秒） |
-| `cleanup` | 否 | 宿主播放结束/切换时调用的清理函数 |
+| `cleanup` | 否 | 这份流被替换/播放器销毁时宿主调用的清理函数（见下） |
 
 `mediaInfo` 每项：
 
@@ -140,6 +140,14 @@ interface CloudVideoConnector {
 - `streamInfo.url` 应与 `mediaInfo` 中某一项的 `url` 相同，该项的 `resolution` 会被当作当前清晰度。
 - `resolution === '原画'` 有特殊含义：播放器按直链路径处理（不做清晰度切换）。
 - 只有一路流时，`mediaInfo` 写一项即可。
+
+### 播放地址过期与资源清理
+
+平台返回的播放地址通常有有效期（带签名的 CDN 链接、取流接口下发的地址）。宿主会兜底：
+
+- 播放中地址失效（HTTP 401/403/404/410）时，宿主会**以同一 URL 再次调用 `resolve`**，拿到新地址后自动跳回原播放位置续播。所以 `resolve` 必须可重复调用：不要把一次性状态累积在实例上，也不要指望它只会被调用一次。
+- 一份 `MediaStreamInfo` 被替换（过期重取、切换视频）或播放器销毁时，宿主会调用它的 `cleanup`。请把 `resolve` 期间创建的一次性资源（定时器、本地服务、临时订阅）挂在返回值的 `cleanup` 上；需要跨多份流存活的资源放在实例的 `dispose` 里。
+- 自动重取有次数上限（当前 2 次；重取成功后 1 分钟内不再过期即归还额度），超过后播放失败会如实暴露给用户。
 
 ## 6. proxy 与 headers：桌面端与移动端不同
 
@@ -157,6 +165,14 @@ if (ctx.platform.isMobile) {
 ```
 
 明确报错比让用户看到一个莫名其妙的播放失败要好。
+
+### 直连播放要求源站允许跨域
+
+宿主播放 `<video crossorigin="anonymous">`（截图、字幕轨需要读取像素），所以 **`proxy` 不为 `true` 时，源站必须返回 `Access-Control-Allow-Origin`**；只按 Range 返回字节、没有 CORS 头的地址，播放器会以 `MEDIA_ELEMENT_ERROR: Format error` 失败，看起来像编码问题，实则是跨域被拒。
+
+- 桌面端有防盗链头的地址用 `proxy: true`：本地代理会补上 CORS 头，源站不需要支持跨域。
+- 移动端没有代理（见上），源站必须自己允许跨域，否则该地址在移动端无法播放。
+- 自测时可以先用 `curl -H 'Origin: app://obsidian.md' -I <地址>` 看响应里有没有 `access-control-allow-origin`。
 
 ## 7. 硬性约束
 

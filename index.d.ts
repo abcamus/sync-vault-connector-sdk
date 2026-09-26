@@ -86,6 +86,10 @@ export interface MediaStreamInfo {
     coverUrl?: string;
     mediaInfo: MediaInfo[];
     proxy?: boolean;
+    /**
+     * 清理回调：这份流信息被宿主替换（过期重取/切换）或播放器销毁时调用，
+     * 用于释放 resolve 期间创建的资源（定时器、本地服务等）。
+     */
     cleanup?: () => void;
 }
 /** 所有 connector 的公共形状 */
@@ -97,7 +101,11 @@ export interface Connector {
 export interface CloudVideoConnector extends Connector {
     /** 是否能处理该地址；宿主按注册顺序询问 */
     match(url: string): boolean;
-    /** 解析为可播放流；失败必须抛出明确错误 */
+    /**
+     * 解析为可播放流；失败必须抛出明确错误。
+     * 播放地址有有效期时，宿主会在过期后以同一 URL 再次调用本方法，
+     * 因此实现必须可重复调用（无累积副作用；一次性资源挂到返回值的 cleanup 上）。
+     */
     resolve(url: string, onProgress?: (message: string) => void): Promise<MediaStreamInfo>;
 }
 /** main.js 必须导出的模块形状 */

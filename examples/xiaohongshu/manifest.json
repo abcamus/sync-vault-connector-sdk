@@ -1,0 +1,10 @@
+{
+  "id": "xiaohongshu",
+  "name": "小红书",
+  "version": "1.0.0",
+  "apiVersion": "0.1",
+  "type": "cloud-video",
+  "description": "解析小红书视频笔记（explore / discovery 地址、xhslink 短链）为可播放直链，桌面端与移动端均可播放",
+  "author": "Camus Qiu",
+  "homepage": "https://github.com/sync-vault/sync-vault-connector-sdk"
+}
