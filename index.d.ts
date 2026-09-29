@@ -1,7 +1,5 @@
 /**
  * sync-vault connector SDK —— 契约类型（自动生成，请勿手改）
- * 生成命令：sync-vault 主仓库 `npx tsx tools/emit-connector-sdk.ts <本目录>`
- * 来源：src/connector/def.ts
  */
 
 /** 宿主当前实现的契约版本；manifest.apiVersion 的主版本必须与之相同 */

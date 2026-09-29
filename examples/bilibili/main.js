@@ -1,5 +1,5 @@
 /**
- * Bilibili connector —— 用 sync-vault-connector-sdk 重写 Sync Vault 内置的 B站解析。
+ * Bilibili connector —— 用 @sync-vault/connector-sdk 重写 Sync Vault 内置的 B站解析。
  *
  * 覆盖 /video/BV… 、/video/av… 与 b23.tv 短链；取的是 html5 平台的合并流。
  * 合并流需要 Referer 防盗链头，经宿主本地代理转发，因此仅桌面端可用。

@@ -6,7 +6,7 @@
  */
 import { fileURLToPath } from 'node:url';
 
-import { loadConnector } from 'sync-vault-connector-sdk/mock';
+import { loadConnector } from '@sync-vault/connector-sdk/mock';
 
 const url = process.argv[2];
 if (!url) {

@@ -1,4 +1,4 @@
-# sync-vault-connector-sdk
+# @sync-vault/connector-sdk
 
 为 [Sync Vault](https://obsidian-sync-vault.com) 编写 **connector** 所需的类型定义与本地调试工具。
 
@@ -12,7 +12,7 @@ Connector 是一段你自己写的 JS：把 Sync Vault 还不支持的外部视�
 ## 安装
 
 ```bash
-npm install --save-dev sync-vault-connector-sdk
+npm install --save-dev @sync-vault/connector-sdk
 ```
 
 本包不提供运行时代码：类型用 `import type` 引入，编译后不会残留任何依赖。
@@ -99,7 +99,7 @@ npx sync-vault-connector-mock ./my-connector "https://media.example.com/video/1"
 或者在脚本里用 mock 能力：
 
 ```js
-const { loadConnector, createMockContext } = require('sync-vault-connector-sdk/mock');
+const { loadConnector, createMockContext } = require('@sync-vault/connector-sdk/mock');
 
 const { manifest, instance } = await loadConnector('./my-connector');
 console.log(manifest.id, instance.match('https://media.example.com/video/1'));
@@ -116,6 +116,7 @@ mock 的校验规则、`main.js` 求值方式与宿主一致；差异只有两�
 ## 文档
 
 - [CONNECTOR_API.md](CONNECTOR_API.md) —— 契约细节：manifest 字段、ctx 能力、`MediaStreamInfo`、生命周期、约束
+- [examples/web-video](examples/web-video) —— 最小示例，建议从这里入手：解析公开网络可访问的直链 / HLS 视频地址
 - [examples/bilibili](examples/bilibili) —— 用本 SDK 写的 B 站解析 connector（与插件内置实现同一套解析逻辑）
 - [examples/xiaohongshu](examples/xiaohongshu) —— 用本 SDK 写的小红书视频笔记解析 connector（CDN 直连，桌面端与移动端均可播放）
 

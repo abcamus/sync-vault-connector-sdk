@@ -1,5 +1,5 @@
 /**
- * Xiaohongshu（小红书）connector —— 用 sync-vault-connector-sdk 解析小红书视频笔记。
+ * Xiaohongshu（小红书）connector —— 用 @sync-vault/connector-sdk 解析小红书视频笔记。
  *
  * 支持 /explore/<id>、/discovery/item/<id>、/user/profile/<uid>/<noteid> 与 xhslink.com / xhslink.cn 短链。
  * 解析路径：取笔记页 HTML → 解析 window.__INITIAL_STATE__ → note.video.media.stream 取流。

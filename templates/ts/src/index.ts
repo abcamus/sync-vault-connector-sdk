@@ -1,4 +1,4 @@
-import type { CloudVideoConnector, ConnectorContext, MediaStreamInfo } from 'sync-vault-connector-sdk';
+import type { CloudVideoConnector, ConnectorContext, MediaStreamInfo } from '@sync-vault/connector-sdk';
 
 interface Settings {
     /** 目标站需要防盗链头时填写，例如 https://demo.example.com/ */

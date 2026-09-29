@@ -189,7 +189,7 @@ if (ctx.platform.isMobile) {
 npx sync-vault-connector-mock ./my-connector "https://example.com/video/1"
 ```
 
-  或在脚本里用 `require('sync-vault-connector-sdk/mock')` 的 `loadConnector` / `createMockContext`。
+  或在脚本里用 `require('@sync-vault/connector-sdk/mock')` 的 `loadConnector` / `createMockContext`。
   mock 的校验与求值规则和宿主一致，能提前暴露 manifest 字段错误、ESM 语法、`require` 缺失等问题。
 
 2. 装进 vault 后：在 Obsidian 命令面板执行“重新加载用户 Connectors”，看 Notice 汇总与日志。
