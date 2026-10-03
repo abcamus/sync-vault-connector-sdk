@@ -1,6 +1,6 @@
 {
   "name": "@sync-vault/connector-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Type definitions and local dev harness for writing Sync Vault connectors",
   "license": "MIT",
   "author": "Camus Qiu",
@@ -33,7 +33,7 @@
     }
   },
   "bin": {
-    "sync-vault-connector-mock": "./mock/cli.js"
+    "sync-vault-connector-mock": "mock/cli.js"
   },
   "files": [
     "index.d.ts",

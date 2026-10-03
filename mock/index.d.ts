@@ -1,5 +1,5 @@
 import type {
-    CloudVideoConnector,
+    VideoSourceConnector,
     ConnectorContext,
     ConnectorManifest,
 } from '..';
@@ -15,7 +15,7 @@ export interface MockContextOptions {
 
 export interface LoadedConnector {
     manifest: ConnectorManifest;
-    instance: CloudVideoConnector;
+    instance: VideoSourceConnector;
     ctx: ConnectorContext;
 }
 

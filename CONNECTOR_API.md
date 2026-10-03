@@ -1,9 +1,9 @@
-# Connector API 0.1
+# Connector API 0.2
 
 Sync Vault connector 的契约说明。类型定义见 [index.d.ts](index.d.ts)（自动生成，权威来源是插件的 `src/connector/def.ts`）。
 
-契约版本 `CONNECTOR_API_VERSION = "0.1"`，SDK 版本主次号跟随契约版本：`0.1.x` 的 SDK 对应契约 `0.1`。
-判定兼容只看**主版本**：`manifest.apiVersion = "0.2.1"` 与宿主 `0.1` 不兼容；`"0.1.9"` 兼容。
+契约版本 `CONNECTOR_API_VERSION = "0.2"`，SDK 版本主次号跟随契约版本：`0.2.x` 的 SDK 对应契约 `0.2`。
+判定兼容只看**主版本号（首段）**：`manifest.apiVersion = "1.0"` 与宿主 `0.2` 不兼容；`"0.2.1"`、`"0.1.9"` 兼容。
 
 ## 1. 交付物与加载
 
@@ -34,7 +34,7 @@ Sync Vault connector 的契约说明。类型定义见 [index.d.ts](index.d.ts)�
 | `name` | 是 | 展示名 |
 | `version` | 是 | connector 自己的版本号 |
 | `apiVersion` | 是 | 目标契约版本，主版本必须与宿主一致 |
-| `type` | 是 | connector 类型，当前只支持 `cloud-video` |
+| `type` | 是 | connector 类型，当前只支持 `video-source` |
 | `description` | 否 | 一句话说明 |
 | `author` | 否 | 作者 |
 | `homepage` | 否 | 仓库/主页地址 |
@@ -97,10 +97,10 @@ resp.arrayBuffer;   // ArrayBuffer
 
 `settings.json` 适合放 cookie、token 这类配置：它是 vault 里的普通文件，**明文存储**，注意同步与分享场景下的泄露风险。不要把密钥硬编码在 `main.js` 里。
 
-## 5. cloud-video 契约
+## 5. video-source 契约
 
 ```ts
-interface CloudVideoConnector {
+interface VideoSourceConnector {
     match(url: string): boolean;
     resolve(url: string, onProgress?: (message: string) => void): Promise<MediaStreamInfo>;
     dispose?(): void | Promise<void>;
@@ -198,5 +198,5 @@ npx sync-vault-connector-mock ./my-connector "https://example.com/video/1"
 ## 9. 契约演进
 
 - `def.ts` 是契约的唯一事实来源，SDK 的 `index.d.ts` 由它生成；插件仓库里有 `sdk:check` 校验两者是否漂移。
-- 新增能力只加可选字段/可选成员，属于次版本；删改字段、改语义属于主版本，会同步提升 `CONNECTOR_API_VERSION` 主版本号。
-- 宿主只按主版本判断兼容，因此主版本不变时，老 connector 不需要改动。
+- 新增能力只加可选字段/可选成员，属于次版本；删改字段、改语义属于破坏性变更。1.0 之前破坏性变更也以次版本号标记（如 0.2 把 `type` 取值 `cloud-video` 改为 `video-source`），1.0 起提升主版本号。
+- 宿主只按主版本号判断版本门：主版本不变时，仅新增可选字段的扩展不影响老 connector；破坏性变更由 manifest 字段校验兜底 —— 老 connector 会收到明确报错（如“不支持的 connector 类型”），不会静默失效。

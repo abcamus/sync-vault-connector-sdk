@@ -1,4 +1,4 @@
-import type { CloudVideoConnector, ConnectorContext, MediaStreamInfo } from '@sync-vault/connector-sdk';
+import type { VideoSourceConnector, ConnectorContext, MediaStreamInfo } from '@sync-vault/connector-sdk';
 
 interface Settings {
     /** 目标站需要防盗链头时填写，例如 https://demo.example.com/ */
@@ -6,7 +6,7 @@ interface Settings {
 }
 
 /** main.js 导出的工厂：宿主加载时调用一次，返回值即 connector 实例 */
-export function create(ctx: ConnectorContext): CloudVideoConnector {
+export function create(ctx: ConnectorContext): VideoSourceConnector {
     return {
         match(url) {
             // 保持同步且廉价：只做字符串判断，不要在这里发请求

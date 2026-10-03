@@ -3,9 +3,9 @@
  */
 
 /** 宿主当前实现的契约版本；manifest.apiVersion 的主版本必须与之相同 */
-export declare const CONNECTOR_API_VERSION = "0.1";
+export declare const CONNECTOR_API_VERSION = "0.2";
 /** 已支持的 connector 类型；新增类型需在此登记并补充对应能力接口 */
-export declare const CONNECTOR_TYPES: readonly ["cloud-video"];
+export declare const CONNECTOR_TYPES: readonly ["video-source"];
 export type ConnectorType = (typeof CONNECTOR_TYPES)[number];
 export interface ConnectorManifest {
     /** 唯一标识，必须与所在目录名一致，允许 [a-z0-9-_] */
@@ -13,7 +13,7 @@ export interface ConnectorManifest {
     name: string;
     /** connector 自己的版本号 */
     version: string;
-    /** 目标契约版本，如 "0.1" */
+    /** 目标契约版本，如 "0.2" */
     apiVersion: string;
     type: ConnectorType;
     description?: string;
@@ -95,8 +95,8 @@ export interface Connector {
     /** 卸载时调用（reload / 插件停用），用于清理定时器、连接等资源 */
     dispose?(): void | Promise<void>;
 }
-/** 视频类 connector：把外部视频地址解析为可播放流 */
-export interface CloudVideoConnector extends Connector {
+/** 视频源 connector：把外部视频地址解析为可播放流 */
+export interface VideoSourceConnector extends Connector {
     /** 是否能处理该地址；宿主按注册顺序询问 */
     match(url: string): boolean;
     /**
@@ -107,6 +107,6 @@ export interface CloudVideoConnector extends Connector {
     resolve(url: string, onProgress?: (message: string) => void): Promise<MediaStreamInfo>;
 }
 /** main.js 必须导出的模块形状 */
-export interface ConnectorModule<T extends Connector = CloudVideoConnector> {
+export interface ConnectorModule<T extends Connector = VideoSourceConnector> {
     create(ctx: ConnectorContext): T | Promise<T>;
 }

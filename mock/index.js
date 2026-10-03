@@ -20,7 +20,7 @@ const API_VERSION = (() => {
     return version;
 })();
 
-const CONNECTOR_TYPES = ['cloud-video'];
+const CONNECTOR_TYPES = ['video-source'];
 
 function makeLogger(id) {
     const prefix = `[connector.${id}]`;
@@ -119,12 +119,12 @@ function assertCapability(manifest, instance) {
     if (!instance || typeof instance !== 'object') {
         throw new Error('create(ctx) 必须返回 connector 实例对象');
     }
-    if (manifest.type === 'cloud-video') {
+    if (manifest.type === 'video-source') {
         if (typeof instance.match !== 'function') {
-            throw new Error('cloud-video 类型必须实现 match(url)');
+            throw new Error('video-source 类型必须实现 match(url)');
         }
         if (typeof instance.resolve !== 'function') {
-            throw new Error('cloud-video 类型必须实现 resolve(url, onProgress)');
+            throw new Error('video-source 类型必须实现 resolve(url, onProgress)');
         }
     }
 }
