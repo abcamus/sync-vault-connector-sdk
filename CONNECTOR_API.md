@@ -34,7 +34,7 @@ Sync Vault connector 的契约说明。类型定义见 [index.d.ts](index.d.ts)�
 | `name` | 是 | 展示名 |
 | `version` | 是 | connector 自己的版本号 |
 | `apiVersion` | 是 | 目标契约版本，主版本必须与宿主一致 |
-| `type` | 是 | connector 类型，当前只支持 `video-source` |
+| `type` | 是 | connector 类型，当前支持 `video-source` 与 `agent-session`（后者为骨架形态，见 §6 与 [examples/qoder](examples/qoder)） |
 | `description` | 否 | 一句话说明 |
 | `author` | 否 | 作者 |
 | `homepage` | 否 | 仓库/主页地址 |
@@ -75,6 +75,7 @@ module.exports = {
 | `log` | `debug` / `info` / `warn` / `error`，写入 Sync Vault 日志 |
 | `getSettings<T>()` | 读取本 connector 的 `settings.json`，文件不存在返回 `null` |
 | `saveSettings(obj)` | 写入 `settings.json`（缩进 2 的 JSON） |
+| `desktop` | **桌面专属**的 vault 外文件通道（`homeDir` / `list` / `stat` / `readText` / `readBinary` / `writeText` / `writeBinary` / `mkdir` / `remove`）；移动端为 `undefined`。vault 之外的本机路径（如 `~/.qoder`）一律经此访问 |
 
 `request` 语义：
 
@@ -149,7 +150,34 @@ interface VideoSourceConnector {
 - 一份 `MediaStreamInfo` 被替换（过期重取、切换视频）或播放器销毁时，宿主会调用它的 `cleanup`。请把 `resolve` 期间创建的一次性资源（定时器、本地服务、临时订阅）挂在返回值的 `cleanup` 上；需要跨多份流存活的资源放在实例的 `dispose` 里。
 - 自动重取有次数上限（当前 2 次；重取成功后 1 分钟内不再过期即归还额度），超过后播放失败会如实暴露给用户。
 
-## 6. proxy 与 headers：桌面端与移动端不同
+## 6. agent-session 契约（骨架）
+
+把某家 Agent 的本机会话搬运到其他设备并落位恢复。宿主负责受管仓库、
+版本游标与跨设备分发，connector 只负责该 Agent 的存储布局与恢复方式。
+完整示例见 [examples/qoder](examples/qoder)。
+
+```ts
+interface AgentSessionConnector {
+    probe(): Promise<AgentSessionProbeResult>;
+    discover(): Promise<AgentSessionRef[]>;
+    export(ref: AgentSessionRef): Promise<AgentSessionBundle>;
+    stage(bundle: AgentSessionBundle, env: DeviceEnv): Promise<ResumePlan>;
+    watch?(ref: AgentSessionRef, onChange: () => void): () => void;
+}
+```
+
+- 四个核心方法缺一即拒绝加载；`type` 为 `agent-session` 的 connector 不参与视频地址解析。
+- `probe` / `discover` / `export`：探测 → 列出会话（含原生游标 `nativeMtime` / `nativeSize`）
+  → 读出数据包。失败必须抛出明确错误。
+- `stage(bundle, env)`：把数据包写回本机对应位置，返回恢复指引 `ResumePlan`
+  （恢复命令 + 建议 cwd + 注意事项）。**不自动执行命令**，是否恢复由人决定。
+  `env` 是宿主注入的目标设备环境（`homeDir` / `platform` / `cwdMap`，移动端为 null）。
+- 数据包文件路径为会话内相对路径；含 `..`、绝对路径或反斜杠的条目会被宿主拒绝。
+- **仅桌面端**：vault 之外的文件读写一律走 `ctx.desktop`；移动端该通道为 `undefined`，
+  请在方法里显式报错（宿主在移动端只会读展示受管会话）。
+- `watch` 为可选增强；不实现时回流检测由宿主按游标对比完成。
+
+## 7. proxy 与 headers：桌面端与移动端不同
 
 防盗链（需要 `Referer` 等头）的地址，把 `proxy: true` 和 `headers` 一起返回：
 
@@ -174,14 +202,14 @@ if (ctx.platform.isMobile) {
 - 移动端没有代理（见上），源站必须自己允许跨域，否则该地址在移动端无法播放。
 - 自测时可以先用 `curl -H 'Origin: app://obsidian.md' -I <地址>` 看响应里有没有 `access-control-allow-origin`。
 
-## 7. 硬性约束
+## 8. 硬性约束
 
 - **移动端兼容**：connector 在 iOS/Android 上同样会被加载和执行。不能用 Node 内置模块（`fs`、`path`、`http`…）、不能用 Electron 专属 API。需要随机数/摘要时用 Web 标准的 `crypto.subtle`。
-- **文件读写**：只能通过 `ctx.getSettings` / `saveSettings`；不要试图直接访问 vault 里的其它文件。
+- **文件读写**：vault 内只能通过 `ctx.getSettings` / `saveSettings`；vault 外的本机文件仅 agent-session 类型可用，且只能走 `ctx.desktop`（桌面端）。
 - **没有沙箱**：connector 的代码以插件同等权限运行，能发起网络请求、读写自己的配置。请只安装你信任的 connector。
 - **别阻塞**：`match` 保持同步且廉价；耗时操作放 `resolve`。
 
-## 8. 调试
+## 9. 调试
 
 1. 本地跑（不需要 Obsidian）：
 
@@ -189,13 +217,14 @@ if (ctx.platform.isMobile) {
 npx sync-vault-connector-mock ./my-connector "https://example.com/video/1"
 ```
 
+  agent-session 类型不需要地址参数（加载 → `probe` → `discover`）：`npx sync-vault-connector-mock ./my-connector`。
   或在脚本里用 `require('@sync-vault/connector-sdk/mock')` 的 `loadConnector` / `createMockContext`。
   mock 的校验与求值规则和宿主一致，能提前暴露 manifest 字段错误、ESM 语法、`require` 缺失等问题。
 
 2. 装进 vault 后：在 Obsidian 命令面板执行“重新加载用户 Connectors”，看 Notice 汇总与日志。
 3. 播放失败时先确认日志里有没有 `[connector.<id>]` 的记录：`resolve` 抛出的错误会记在那里。
 
-## 9. 契约演进
+## 10. 契约演进
 
 - `def.ts` 是契约的唯一事实来源，SDK 的 `index.d.ts` 由它生成；插件仓库里有 `sdk:check` 校验两者是否漂移。
 - 新增能力只加可选字段/可选成员，属于次版本；删改字段、改语义属于破坏性变更。1.0 之前破坏性变更也以次版本号标记（如 0.2 把 `type` 取值 `cloud-video` 改为 `video-source`），1.0 起提升主版本号。

@@ -8,8 +8,9 @@
  */
 'use strict';
 
-const { existsSync, readFileSync, writeFileSync } = require('fs');
-const { basename, join, resolve } = require('path');
+const { existsSync, readFileSync, writeFileSync, promises: fsp } = require('fs');
+const { basename, join, normalize, resolve } = require('path');
+const os = require('os');
 
 const API_VERSION = (() => {
     const source = readFileSync(join(__dirname, '..', 'index.d.ts'), 'utf8');
@@ -20,7 +21,7 @@ const API_VERSION = (() => {
     return version;
 })();
 
-const CONNECTOR_TYPES = ['video-source'];
+const CONNECTOR_TYPES = ['video-source', 'agent-session'];
 
 function makeLogger(id) {
     const prefix = `[connector.${id}]`;
@@ -54,17 +55,73 @@ async function request(options) {
     };
 }
 
+/** 与宿主 desktop-fs.ts 同语义的 Node 实现（桌面平台注入；移动端为 undefined） */
+function makeDesktopFileAccess() {
+    return {
+        homeDir: () => os.homedir(),
+        platform: () => os.platform(),
+        async exists(p) {
+            try {
+                await fsp.access(normalize(p));
+                return true;
+            } catch {
+                return false;
+            }
+        },
+        async list(p) {
+            const dir = normalize(p);
+            const entries = await fsp.readdir(dir, { withFileTypes: true });
+            const files = [];
+            const folders = [];
+            for (const entry of entries) {
+                const full = join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    folders.push(full);
+                } else {
+                    files.push(full);
+                }
+            }
+            return { files, folders };
+        },
+        async stat(p) {
+            const s = await fsp.stat(normalize(p));
+            return { mtime: s.mtimeMs, size: s.size, isDir: s.isDirectory() };
+        },
+        async readText(p) {
+            return fsp.readFile(normalize(p), 'utf8');
+        },
+        async readBinary(p) {
+            const buf = await fsp.readFile(normalize(p));
+            return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+        },
+        async writeText(p, data) {
+            await fsp.writeFile(normalize(p), data, 'utf8');
+        },
+        async writeBinary(p, data) {
+            await fsp.writeFile(normalize(p), new Uint8Array(data));
+        },
+        async mkdir(p) {
+            await fsp.mkdir(normalize(p), { recursive: true });
+        },
+        async remove(p) {
+            await fsp.rm(normalize(p), { recursive: true });
+        },
+    };
+}
+
 /** 构造与宿主同形状的 ConnectorContext（settings 落盘到 <dir>/settings.json） */
 function createMockContext(options = {}) {
     const id = options.id ?? 'local';
     const dir = options.dir ? resolve(options.dir) : process.cwd();
     const settingsPath = join(dir, 'settings.json');
+    const platform = options.platform ?? { isDesktop: true, isMobile: false };
     return {
         id,
         dir,
-        platform: options.platform ?? { isDesktop: true, isMobile: false },
+        platform,
         log: makeLogger(id),
         request,
+        desktop: platform.isDesktop ? makeDesktopFileAccess() : undefined,
         async getSettings() {
             if (!existsSync(settingsPath)) return null;
             return JSON.parse(readFileSync(settingsPath, 'utf8'));
@@ -125,6 +182,13 @@ function assertCapability(manifest, instance) {
         }
         if (typeof instance.resolve !== 'function') {
             throw new Error('video-source 类型必须实现 resolve(url, onProgress)');
+        }
+    }
+    if (manifest.type === 'agent-session') {
+        for (const method of ['probe', 'discover', 'export', 'stage']) {
+            if (typeof instance[method] !== 'function') {
+                throw new Error(`agent-session 类型必须实现 ${method}()`);
+            }
         }
     }
 }

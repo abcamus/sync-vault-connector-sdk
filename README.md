@@ -94,6 +94,9 @@ module.exports = {
 ```bash
 # 冒烟：加载 → match → resolve，打印解析结果
 npx sync-vault-connector-mock ./my-connector "https://media.example.com/video/1"
+
+# agent-session 类型：加载 → probe → discover（不带地址）
+npx sync-vault-connector-mock ./my-connector
 ```
 
 或者在脚本里用 mock 能力：
@@ -119,6 +122,7 @@ mock 的校验规则、`main.js` 求值方式与宿主一致；差异只有两�
 - [examples/web-video](examples/web-video) —— 最小示例，建议从这里入手：解析公开网络可访问的直链 / HLS 视频地址
 - [examples/bilibili](examples/bilibili) —— 用本 SDK 写的 B 站解析 connector（与插件内置实现同一套解析逻辑）
 - [examples/xiaohongshu](examples/xiaohongshu) —— 用本 SDK 写的小红书视频笔记解析 connector（CDN 直连，桌面端与移动端均可播放）
+- [examples/qoder](examples/qoder) —— agent-session 类型：把 Qoder CLI 本机会话导出到受管仓库，在其他设备落位后用 `qoder -r` 恢复（仅桌面端）
 
 ## 许可
 

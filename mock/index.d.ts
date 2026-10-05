@@ -1,5 +1,6 @@
 import type {
     VideoSourceConnector,
+    Connector,
     ConnectorContext,
     ConnectorManifest,
 } from '..';
@@ -13,9 +14,9 @@ export interface MockContextOptions {
     platform?: { isDesktop: boolean; isMobile: boolean };
 }
 
-export interface LoadedConnector {
+export interface LoadedConnector<T extends Connector = VideoSourceConnector> {
     manifest: ConnectorManifest;
-    instance: VideoSourceConnector;
+    instance: T;
     ctx: ConnectorContext;
 }
 
@@ -25,4 +26,4 @@ export declare const API_VERSION: string;
 export declare function createMockContext(options?: MockContextOptions): ConnectorContext;
 
 /** 按宿主 loader 的规则加载 <dir>/manifest.json + main.js，求值并 create(ctx) */
-export declare function loadConnector(dir: string, options?: MockContextOptions): Promise<LoadedConnector>;
+export declare function loadConnector<T extends Connector = VideoSourceConnector>(dir: string, options?: MockContextOptions): Promise<LoadedConnector<T>>;

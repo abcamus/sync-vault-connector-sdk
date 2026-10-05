@@ -1,0 +1,10 @@
+{
+  "id": "qoder",
+  "name": "Qoder Sessions",
+  "version": "0.1.0",
+  "apiVersion": "0.2",
+  "type": "agent-session",
+  "description": "把本机 Qoder CLI 会话导出到受管仓库，可在其他设备落位并用 qoder -r 恢复",
+  "author": "Camus Qiu",
+  "homepage": "https://github.com/abcamus/sync-vault-connector-sdk"
+}
