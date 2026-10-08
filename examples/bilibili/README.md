@@ -1,8 +1,9 @@
 # Bilibili 示例 connector
 
-用本 SDK 写的 B站解析 connector，与 Sync Vault 内置的 B站解析是同一套逻辑：
+用本 SDK 写的 B站解析 connector —— Sync Vault 的 B站 播放由 connector 承担，宿主不内置 B站 解析：
 
 - 支持 `/video/BV…`、`/video/av…`、`?p=N` 分 P、`b23.tv` 短链
+- 多分P 视频返回分集列表（`parts`），播放器侧栏可切换分集，播完自动续播下一集
 - 取 `html5` 平台的合并流（mp4），清晰度按 `1080P60 → 1080P → 720P` 逐级回退
 - 合并流需要 `Referer` 防盗链头，经宿主本地代理转发，**仅桌面端可用**（移动端会明确报错）
 
@@ -16,8 +17,7 @@
 
 然后在 Obsidian 里执行命令“重新加载用户 Connectors”。
 
-注意：用户 connector 优先于内置实现。这个示例装上后，B站地址会走它（行为与内置一致）；
-不想要时把目录删掉、重新加载即可。
+B站地址由这个 connector 解析；不想要时把目录删掉（或在 Connector 列表中禁用）、重新加载即可。
 
 ## 可选配置：Cookie
 

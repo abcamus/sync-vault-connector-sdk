@@ -3,7 +3,7 @@
  */
 
 /** 宿主当前实现的契约版本；manifest.apiVersion 的主版本必须与之相同 */
-export declare const CONNECTOR_API_VERSION = "0.2";
+export declare const CONNECTOR_API_VERSION = "0.3";
 /** 已支持的 connector 类型；新增类型需在此登记并补充对应能力接口 */
 export declare const CONNECTOR_TYPES: readonly ["video-source", "agent-session"];
 export type ConnectorType = (typeof CONNECTOR_TYPES)[number];
@@ -13,7 +13,7 @@ export interface ConnectorManifest {
     name: string;
     /** connector 自己的版本号 */
     version: string;
-    /** 目标契约版本，如 "0.2" */
+    /** 目标契约版本，如 "0.3" */
     apiVersion: string;
     type: ConnectorType;
     description?: string;
@@ -76,6 +76,13 @@ export interface MediaInfo {
     sampleRate?: number;
     fileSize?: number;
 }
+/** 多分P / 多集视频中的一个分集 */
+export interface VideoSourcePart {
+    /** 展示名（如 "P1 标题"），宿主直接用作选集列表文案 */
+    name: string;
+    /** 可再次 resolve 的原始地址（宿主切换分集时以它重新取流） */
+    url: string;
+}
 /**
  * 解析出的媒体流信息，宿主会直接交给播放器。
  * 与宿主内部同名类型结构一致，宿主构建期类型检查会保证两者不漂移。
@@ -89,6 +96,13 @@ export interface MediaStreamInfo {
     coverUrl?: string;
     mediaInfo: MediaInfo[];
     proxy?: boolean;
+    /**
+     * 分集列表（多分P / 多集视频）：≥2 项时宿主展示选集并支持切换，单集可缺省。
+     * 每项的 url 必须能被本 connector 再次 resolve（宿主切换分集时按其重新取流）。
+     */
+    parts?: VideoSourcePart[];
+    /** 当前解析结果对应的分集下标（parts 存在时有效，缺省 0） */
+    currentPartIndex?: number;
     /**
      * 清理回调：这份流信息被宿主替换（过期重取/切换）或播放器销毁时调用，
      * 用于释放 resolve 期间创建的资源（定时器、本地服务等）。

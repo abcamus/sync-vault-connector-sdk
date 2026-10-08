@@ -3,6 +3,7 @@
  *
  * 覆盖 /video/BV… 、/video/av… 与 b23.tv 短链；取的是 html5 平台的合并流。
  * 合并流需要 Referer 防盗链头，经宿主本地代理转发，因此仅桌面端可用。
+ * 多分P 视频会一并返回分集列表（parts），宿主播放器侧栏可直接切换分集。
  *
  * 可选配置（settings.json，与 main.js 同目录）：
  *   { "cookie": "SESSDATA=...; bili_jct=..." }
@@ -166,7 +167,9 @@ module.exports = {
 
                 onProgress?.('获取 B站视频信息...');
                 const view = await fetchView(ref);
-                const page = view.pages.find(p => p.page === ref.page) ?? view.pages[0];
+                // pages 里没有 ?p= 指定的分P 时回退到第一集（下标即分集序号-1）
+                const pageIndex = Math.max(0, view.pages.findIndex(p => p.page === ref.page));
+                const page = view.pages[pageIndex];
 
                 onProgress?.('获取 B站播放地址...');
                 let playurl = null;
@@ -186,6 +189,15 @@ module.exports = {
                 const label = QUALITY_LABEL[playurl.quality] ?? `${playurl.quality}P`;
                 ctx.log.debug(`B站解析成功: ${view.bvid} cid=${page.cid} qn=${playurl.quality}(${label})`);
 
+                // 多分P：使用 view 里已有的 pages 枚举分集，不额外请求；
+                // 分集 url 为规范地址（BV 号 + ?p=N），宿主切换分集时按它再次走本 resolve
+                const parts = view.pages.length > 1
+                    ? view.pages.map(p => ({
+                        name: `P${p.page}${p.part ? ` ${String(p.part).trim()}` : ''}`,
+                        url: `https://www.bilibili.com/video/${view.bvid}?p=${p.page}`,
+                    }))
+                    : undefined;
+
                 return {
                     url: streamUrl,
                     urlType: 'direct',
@@ -194,6 +206,7 @@ module.exports = {
                     proxy: true,
                     headers: { 'Referer': REFERER, 'User-Agent': UA },
                     mediaInfo: [{ width: 0, height: 0, resolution: label, url: streamUrl }],
+                    ...(parts ? { parts, currentPartIndex: pageIndex } : {}),
                 };
             },
         };

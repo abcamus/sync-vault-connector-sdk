@@ -2,7 +2,7 @@
   "id": "web-video",
   "name": "Web Video",
   "version": "1.0.0",
-  "apiVersion": "0.2",
+  "apiVersion": "0.3",
   "type": "video-source",
   "description": "最小示例：把公开网络可访问的视频地址（mp4 等直链文件、m3u8 HLS 播放列表）解析为可播放流",
   "author": "Camus Qiu",

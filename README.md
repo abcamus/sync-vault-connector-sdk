@@ -5,7 +5,7 @@
 Connector 是一段你自己写的 JS：把 Sync Vault 还不支持的外部视频地址，解析成播放器能直接播放的流。
 它和 Sync Vault 内置的云盘 provider 是两套东西 —— connector 由用户开发、运行时加载，不需要重新编译插件。
 
-- 契约版本：**0.2**
+- 契约版本：**0.3**
 - 支持的 connector 类型：`video-source`
 - 运行环境：插件内的 connector 同时运行在**桌面端与移动端**（iOS/Android）
 
@@ -35,7 +35,7 @@ my-connector/
   "id": "my-connector",
   "name": "My Connector",
   "version": "1.0.0",
-  "apiVersion": "0.2",
+  "apiVersion": "0.3",
   "type": "video-source",
   "author": "your-name",
   "homepage": "https://github.com/you/my-connector"

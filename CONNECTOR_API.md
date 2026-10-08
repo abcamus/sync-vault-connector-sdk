@@ -1,9 +1,9 @@
-# Connector API 0.2
+# Connector API 0.3
 
 Sync Vault connector 的契约说明。类型定义见 [index.d.ts](index.d.ts)（自动生成，权威来源是插件的 `src/connector/def.ts`）。
 
-契约版本 `CONNECTOR_API_VERSION = "0.2"`，SDK 版本主次号跟随契约版本：`0.2.x` 的 SDK 对应契约 `0.2`。
-判定兼容只看**主版本号（首段）**：`manifest.apiVersion = "1.0"` 与宿主 `0.2` 不兼容；`"0.2.1"`、`"0.1.9"` 兼容。
+契约版本 `CONNECTOR_API_VERSION = "0.3"`，SDK 版本主次号跟随契约版本：`0.3.x` 的 SDK 对应契约 `0.3`。
+判定兼容只看**主版本号（首段）**：`manifest.apiVersion = "1.0"` 与宿主 `0.3` 不兼容；`"0.3.1"`、`"0.2.9"` 兼容。
 
 ## 1. 交付物与加载
 
@@ -125,6 +125,8 @@ interface VideoSourceConnector {
 | `proxy` | 否 | `true` 表示视频请求经宿主本地代理转发（见下节） |
 | `coverUrl` | 否 | 封面图 |
 | `cursor` | 否 | 上次播放位置（秒） |
+| `parts` | 否 | 分集列表（多分P / 多集视频，见下节） |
+| `currentPartIndex` | 否 | 本次解析结果对应的分集下标（缺省 0） |
 | `cleanup` | 否 | 这份流被替换/播放器销毁时宿主调用的清理函数（见下） |
 
 `mediaInfo` 每项：
@@ -141,6 +143,31 @@ interface VideoSourceConnector {
 - `streamInfo.url` 应与 `mediaInfo` 中某一项的 `url` 相同，该项的 `resolution` 会被当作当前清晰度。
 - `resolution === '原画'` 有特殊含义：播放器按直链路径处理（不做清晰度切换）。
 - 只有一路流时，`mediaInfo` 写一项即可。
+
+### 多分P / 多集（parts）
+
+多分P（如 B站分P）、多集类视频可附带分集列表，宿主会在播放器侧栏展示选集并支持切换：
+
+```js
+return {
+    url: streamUrl,
+    urlType: 'direct',
+    mediaType: 'raw',
+    mediaInfo: [{ width: 0, height: 0, resolution: '1080P', url: streamUrl }],
+    parts: [
+        { name: 'P1 开场', url: 'https://www.bilibili.com/video/BV1xx411c7mD?p=1' },
+        { name: 'P2 正片', url: 'https://www.bilibili.com/video/BV1xx411c7mD?p=2' },
+    ],
+    currentPartIndex: 1, // 本次 resolve 的是 P2
+};
+```
+
+- `parts` 至少 2 项时才展示选集；单集视频不必返回（缺省视为单集）。
+- 宿主切换分集时，会以该分集的 `url` **再次调用 `resolve`**（与过期重取同一路径），
+  因此每个 `url` 必须能被你的 `match` / `resolve` 正常处理；典型做法是返回平台规范地址（如 B站 `BV 号 + ?p=N`）。
+- `currentPartIndex` 表示本次解析的是第几集（缺省 0），宿主以此定位当前项；
+  即使请求的 `?p=` 非法而回退了实际播出的分集，也应如实返回实际分集的下标。
+- 分集在宿主内是独立条目：各自的播放进度、标注锚点按分集地址分别记录；一集播完自动续播下一集。
 
 ### 播放地址过期与资源清理
 
@@ -227,5 +254,5 @@ npx sync-vault-connector-mock ./my-connector "https://example.com/video/1"
 ## 10. 契约演进
 
 - `def.ts` 是契约的唯一事实来源，SDK 的 `index.d.ts` 由它生成；插件仓库里有 `sdk:check` 校验两者是否漂移。
-- 新增能力只加可选字段/可选成员，属于次版本；删改字段、改语义属于破坏性变更。1.0 之前破坏性变更也以次版本号标记（如 0.2 把 `type` 取值 `cloud-video` 改为 `video-source`），1.0 起提升主版本号。
+- 新增能力只加可选字段/可选成员，属于次版本（如 0.3 新增 `MediaStreamInfo.parts` 分集列表）；删改字段、改语义属于破坏性变更。1.0 之前破坏性变更也以次版本号标记（如 0.2 把 `type` 取值 `cloud-video` 改为 `video-source`），1.0 起提升主版本号。
 - 宿主只按主版本号判断版本门：主版本不变时，仅新增可选字段的扩展不影响老 connector；破坏性变更由 manifest 字段校验兜底 —— 老 connector 会收到明确报错（如“不支持的 connector 类型”），不会静默失效。
